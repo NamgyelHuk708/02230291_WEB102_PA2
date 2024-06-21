@@ -121,24 +121,29 @@ app.post("/protected/catch", async (c) => {
   const body = await c.req.json();
   const { name, type, image } = body;
 
-  // Check if the Pokemon already exists in the database
-  let pokemon = await prisma.pokemon.findUnique({ where: { name } });
+  try {
+    // Check if the Pokemon already exists in the database using the unique 'name' field
+    let pokemon = await prisma.pokemon.findUnique({ where: { name } });
 
-  if (!pokemon) {
-    // Create a new Pokemon record if it doesn't exist
-    pokemon = await prisma.pokemon.create({
-      data: { name, type, image }
+    if (!pokemon) {
+      // Create a new Pokemon record if it doesn't exist
+      pokemon = await prisma.pokemon.create({
+        data: { name, type, image }
+      });
+    }
+
+    // Connect caught Pokemon to the user via Prisma relationship
+    await prisma.user.update({
+      where: { id: payload.sub },
+      data: { pokemons: { connect: { id: pokemon.id } } }
     });
+
+    // Return success message with caught Pokemon data
+    return c.json({ message: "Pokemon caught", data: pokemon });
+  } catch (e) {
+    // Handle any potential errors
+    throw new HTTPException(500, { message: "Internal Server Error" });
   }
-
-  // Connect caught Pokemon to the user via Prisma relationship
-  await prisma.user.update({
-    where: { id: payload.sub },
-    data: { pokemons: { connect: { id: pokemon.id } } }
-  });
-
-  // Return success message with caught Pokemon data
-  return c.json({ message: "Pokemon caught", data: pokemon });
 });
 
 // Endpoint to release a caught Pokemon
@@ -219,7 +224,7 @@ app.get('/pokemon/records', async (c) => {
   }
 });
 
-// Endpoint to update a specific Pokemon record
+// Endpoint to update a specific Pokemon arecord
 app.patch('/pokemon/update', async (c) => {
   try {
     const body = await c.req.json();
