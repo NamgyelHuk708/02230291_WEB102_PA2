@@ -270,7 +270,7 @@ app.delete('/pokemon/delete', async (c) => {
     // Return success message after deleting the Pokemon
     return c.json({ message: `Pokemon with ID ${body.id} deleted successfully` });
   } catch (error) {
-    // Return error message if deleting Pokemon fails
+    // Return error message if deleting Pokemon fails.
     return c.json({ message: 'Failed to delete Pokemon' }, 500);
   }
 });
